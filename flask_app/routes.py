@@ -25,18 +25,21 @@ def web_login():
         })    
     return jsonify({"error": "no user found"}) 
 
-@app.route('/api/create_account/', methods=["POST"])
+@app.route('/api/create_account', methods=["POST"])
 def create_account():
     """ create an account with a username, realname, and password provided in
     a json POST request """
     if not request.json or "username" not in request.json or 'password' not in request.json or 'realname' not in request.json:
         return jsonify({"error": "deposit requires json with 'username', 'password', and 'realname' key"}), 400
-    new_user = User(username= request.json['username'], password= request.json['password'], realname= request.json['realname'])
-    password = request.json['password']
-    new_user.hash_password(password)
-    new_user.generate_api_key()
-    new_user.save()
-    return jsonify(new_user.json())
+    if User.one_where("username = ?", (request.json['username'],) ):
+        return jsonify({"error": "username exists"})
+    else:
+        new_user = User(username= request.json['username'], password= request.json['password'], realname= request.json['realname'])
+        password = request.json['password']
+        new_user.hash_password(password)
+        new_user.generate_api_key()
+        new_user.save()
+        return jsonify(new_user.json())
 
 @app.route('/api/price/<ticker>', methods=["GET"])
 def lookup_price(ticker):
